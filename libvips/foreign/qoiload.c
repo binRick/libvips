@@ -47,8 +47,9 @@
 
 #include <vips/vips.h>
 #include <vips/internal.h>
-
+#include "qoi/qoi.h"
 #include "pforeign.h"
+const char *vips__qoi_suffs[] = { ".qoi", NULL };
 
 typedef struct _VipsForeignLoadQoi {
 	VipsForeignLoad parent_object;
@@ -58,8 +59,13 @@ typedef struct _VipsForeignLoadQoi {
 	/* Properties of this qoi, from the header.
 	 */
 	int width;
+	int bits;
+	int ascii;
 	int height;
 	int bands;
+	int format;
+  double scale;
+  void *sbuf;
 
 } VipsForeignLoadQoi;
 
@@ -74,11 +80,6 @@ vips_foreign_load_qoi_is_a_source( VipsSource *source )
 	const unsigned char *data;
 
 	if( (data = vips_source_sniff( source, 2 )) ) { 
-		int i;
-
-		for( i = 0; i < VIPS_NUMBER( magic_names ); i++ )
-			if( vips_isprefix( magic_names[i], (char *) data ) )
-				return( TRUE );
 	}
 
 	return( FALSE );
@@ -158,8 +159,6 @@ vips_foreign_load_qoi_map( VipsForeignLoadQoi *qoi )
 		qoi->width, qoi->height, qoi->bands, qoi->format )) )
 		return( NULL );
 
-	vips_foreign_load_qoi_set_image_metadata( qoi, out );
-
 	return( out );
 }
 
@@ -170,9 +169,7 @@ vips_foreign_load_qoi_load( VipsForeignLoad *load )
 	VipsImage **t = (VipsImage **) 
 		vips_object_local_array( (VipsObject *) load, 2 );
 
-	if( !qoi->have_read_header &&
-		vips_foreign_load_qoi_parse_header( qoi ) )
-		return( 0 );
+		vips_foreign_load_qoi_parse_header( qoi );
 
 	/* If the source is mappable and this is a binary file, we can map it.
 	 */
@@ -180,10 +177,6 @@ vips_foreign_load_qoi_load( VipsForeignLoad *load )
 		!qoi->ascii && 
 		qoi->bits >= 8 ) {
 		if( !(t[0] = vips_foreign_load_qoi_map( qoi )) ) 
-			return( -1 );
-	}
-	else {
-		if( !(t[0] = vips_foreign_load_qoi_scan( qoi )) ) 
 			return( -1 );
 	}
 
@@ -213,7 +206,6 @@ vips_foreign_load_qoi_class_init( VipsForeignLoadQoiClass *class )
 
 	object_class->nickname = "qoiload_base";
 	object_class->description = _( "load qoi base class" );
-	object_class->build = vips_foreign_load_qoi_build;
 
 	/* You're unlikely to want to use this on untrusted files.
 	 */

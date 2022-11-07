@@ -64,6 +64,7 @@
 
 #define QOI_IMPLEMENTATION
 #include "qoi/qoi.h"
+char *vips__save_qoi_suffs[] = { ".qoi", NULL };
 
 typedef struct _VipsForeignSaveQoi VipsForeignSaveQoi;
 
@@ -194,7 +195,6 @@ vips_foreign_save_qoi_file_build( VipsObject *object )
 		build( object ) );
 }
 
-const char *vips__qoi_suffs[] = { ".qoi", NULL };
 
 static void
 vips_foreign_save_qoi_file_class_init( VipsForeignSaveQoiFileClass *class )
@@ -210,7 +210,7 @@ vips_foreign_save_qoi_file_class_init( VipsForeignSaveQoiFileClass *class )
 	object_class->description = _( "save image to file as QOI" );
 	object_class->build = vips_foreign_save_qoi_file_build;
 
-	foreign_class->suffs = vips__qoi_suffs;
+	foreign_class->suffs = (const char **)vips__save_qoi_suffs;
 
 	VIPS_ARG_STRING( class, "filename", 1, 
 		_( "Filename" ),
@@ -268,7 +268,7 @@ vips_foreign_save_qoi_target_class_init(
 	object_class->nickname = "qoisave_target";
 	object_class->build = vips_foreign_save_qoi_target_build;
 
-	foreign_class->suffs = vips__save_qoi_suffs;
+	foreign_class->suffs = (const char**)vips__save_qoi_suffs;
 
 	VIPS_ARG_OBJECT( class, "target", 1,
 		_( "Target" ),
