@@ -38,6 +38,8 @@ foreign_sources = files(
     'ppmsave.c',
     'qoisave.c',
     'qoiload.c',
+    'qoirsave.c',
+    'qoirload.c',
     'quantise.c',
     'radiance.c',
     'radload.c',
