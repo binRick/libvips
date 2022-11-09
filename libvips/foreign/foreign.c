@@ -2833,10 +2833,12 @@ vips_foreign_operation_init( void )
   extern GType vips_foreign_save_qoi_file_get_type( void );
   extern GType vips_foreign_save_qoi_target_get_type( void );
 
+#ifdef VIPS_ANSI  
   extern GType vips_foreign_load_ansi_file_get_type( void );
   extern GType vips_foreign_load_ansi_source_get_type( void );
   extern GType vips_foreign_save_ansi_file_get_type( void );
   extern GType vips_foreign_save_ansi_target_get_type( void );
+#endif
 
   extern GType vips_foreign_load_qoir_file_get_type( void );
   extern GType vips_foreign_load_qoir_source_get_type( void );
@@ -3002,10 +3004,12 @@ vips_foreign_operation_init( void )
 	vips_foreign_save_qoi_file_get_type();
 	vips_foreign_save_qoi_target_get_type();
 
+#ifdef VIPS_ANSI  
   vips_foreign_load_ansi_file_get_type();
   vips_foreign_load_ansi_source_get_type();
   vips_foreign_save_ansi_file_get_type();
   vips_foreign_save_ansi_target_get_type();
+#endif
 
   vips_foreign_load_qoir_file_get_type();
   vips_foreign_load_qoir_source_get_type();
