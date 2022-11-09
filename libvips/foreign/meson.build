@@ -38,6 +38,8 @@ foreign_sources = files(
     'ppmsave.c',
     'qoisave.c',
     'qoiload.c',
+    'ansisave.c',
+    'ansiload.c',
     'qoirsave.c',
     'qoirload.c',
     'quantise.c',
@@ -63,6 +65,49 @@ foreign_sources = files(
     'webpload.c',
     'webpsave.c',
 )
+
+ansi_headers = [
+  'c_kat/include/hashtable.h',
+  'c_kat/include/highlight.h',
+  'c_libansilove/include/ansilove.h',
+  'c_stringfn/include/stringfn.h',
+  ]
+ansi_sources = [
+    'c_stringfn/src/stringfn.c',
+    'c_kat/highlight.c',
+    'c_kat/hashtable.c',
+    'c_libansilove/src/fonts.c',
+    'c_libansilove/src/output.c',
+    'c_libansilove/src/drawchar.c',
+    'c_libansilove/src/init.c',
+    'c_libansilove/src/clean.c',
+    'c_libansilove/src/error.c',
+    'c_libansilove/src/loadfile.c',
+    'c_libansilove/src/savefile.c',
+    'c_libansilove/src/loaders/ansi.c',
+    ]
+  gdlib_dep = dependency('gdlib', required: true)
+ansi_deps = [
+  gdlib_dep,
+  ]
+ansi_inc = [
+'c_stringfn/include',
+'c_kat/include',
+'c_libansilove/include',
+'c_libansilove/src',
+'c_libansilove/compat',
+  ]
+
+ansi_lib = static_library('foreign-ansi',ansi_sources,ansi_headers,
+    gnu_symbol_visibility: 'hidden',
+    include_directories: ansi_inc,
+    dependencies: ansi_deps,
+  )
+ansi_dep = declare_dependency(
+  link_with: [ansi_lib],
+  include_directories: ansi_inc,
+  )
+libvips_deps += ansi_dep
 
 foreign_headers = files(
     'dbh.h',
@@ -126,6 +171,7 @@ if not modules_enabled or get_option('openslide-module').disabled()
 endif
 
 libvips_sources += foreign_sources
+
 
 foreign_lib = static_library('foreign',
     foreign_sources,

@@ -141,6 +141,10 @@ int vips__magick_read_buffer( const void *buf, const size_t len,
 int vips__magick_read_buffer_header( const void *buf, const size_t len,
 	VipsImage *out, const char *density, int page, int n );
 
+//#int vips_qoirload_source(VipsSource *source,VipsImage **out,...);
+//int vips_qoirload(const char *filename,VipsImage **out,...);
+
+extern const char *vips__qoir_suffs[];
 extern const char *vips__mat_suffs[];
 
 int vips__mat_load( const char *filename, VipsImage *out );
