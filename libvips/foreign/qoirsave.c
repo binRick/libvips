@@ -1,32 +1,28 @@
 /*
+ */
  #define DEBUG_VERBOSE
  #define DEBUG
- */
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif /*HAVE_CONFIG_H*/
 #include <glib/gi18n-lib.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <vips/vips.h>
-
 #include <vips/internal.h>
-
 #include "pforeign.h"
-
 #define QOIR_IMPLEMENTATION
+#define UC    VIPS_FORMAT_UCHAR
 #include "qoir/qoir.h"
 char *vips__save_qoir_suffs[] = { ".qoir", NULL };
-
 typedef struct _VipsForeignSaveQoir VipsForeignSaveQoir;
-
 struct _VipsForeignSaveQoir {
   VipsForeignSave parent_object;
-
   VipsTarget      *target;
+};
+static int bandfmt_qoir[10] = {
+  UC, UC, UC, UC, UC, UC, UC, UC, UC, UC
 };
 
 typedef VipsForeignSaveClass VipsForeignSaveQoirClass;
@@ -45,7 +41,9 @@ static void vips_foreign_save_qoir_dispose(GObject *gobject)            {
 }
 
 static int vips_foreign_save_qoir_build(VipsObject *object)           {
+#ifdef DEBUG
   fprintf(stderr, "Saving qoir\n");
+#endif
   VipsForeignSave    *save = (VipsForeignSave *)object;
   VipsImage          *memory;
   qoir_decode_result result = { 0 };
@@ -82,14 +80,6 @@ static int vips_foreign_save_qoir_build(VipsObject *object)           {
   return(0);
 }
 
-/* Save a bit of typing.
- */
-#define UC    VIPS_FORMAT_UCHAR
-
-static int bandfmt_qoir[10] = {
-/* UC  C   US  S   UI  I   F   X   D   DX */
-  UC, UC, UC, UC, UC, UC, UC, UC, UC, UC
-};
 
 static void vips_foreign_save_qoir_class_init(VipsForeignSaveQoirClass *class)            {
   GObjectClass         *gobject_class   = G_OBJECT_CLASS(class);
@@ -209,18 +199,6 @@ static void vips_foreign_save_qoir_target_class_init(VipsForeignSaveQoirTargetCl
 static void vips_foreign_save_qoir_target_init(VipsForeignSaveQoirTarget *target)            {
 }
 
-/**
- * vips_qoirsave: (method)
- * @in: image to save
- * @filename: file to write to
- * @...: %NULL-terminated list of optional named arguments
- *
- * Write to a file as QOIR. Images are saved as 8-bit RGB or RGBA.
- *
- * See also: vips_image_write_to_file().
- *
- * Returns: 0 on success, -1 on error.
- */
 int vips_qoirsave(VipsImage *in, const char *filename, ...)    {
   va_list ap;
   int     result;
@@ -232,18 +210,6 @@ int vips_qoirsave(VipsImage *in, const char *filename, ...)    {
   return(result);
 }
 
-/**
- * vips_qoirsave_target: (method)
- * @in: image to save
- * @target: save image to this target
- * @...: %NULL-terminated list of optional named arguments
- *
- * As vips_qoirsave(), but save to a target.
- *
- * See also: vips_qoirsave().
- *
- * Returns: 0 on success, -1 on error.
- */
 int vips_qoirsave_target(VipsImage *in, VipsTarget *target, ...)    {
   va_list ap;
   int     result;
