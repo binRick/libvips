@@ -1,12 +1,10 @@
 /*
-#define DEBUG
  */
-
+#define DEBUG
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif /*HAVE_CONFIG_H*/
 #include <glib/gi18n-lib.h>
-
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,7 +15,6 @@
 #include "qoir/qoir.h"
 #define QOIR_HEADER_LEN    32
 const char *vips__qoir_suffs[] = { ".qoir", NULL };
-
 typedef struct _VipsForeignLoadQoir {
   VipsForeignLoad                        parent_object;
   VipsSource                             *source;
@@ -66,6 +63,9 @@ static void vips_foreign_load_qoir_dispose(GObject *gobject)            {
 /* Scan the header into our class.
  */
 static int vips_foreign_load_qoir_parse_header(VipsForeignLoadQoir *qoir)           {
+#ifdef DEBUG
+  printf("vips_foreign_load_qoir_parse_header>: \n");
+#endif /*DEBUG*/
   VipsObjectClass *class = VIPS_OBJECT_GET_CLASS(qoir);
 
   if (vips_source_rewind(qoir->source))
@@ -90,6 +90,9 @@ static VipsForeignFlags vips_foreign_load_qoir_get_flags(VipsForeignLoad *load) 
 }
 
 static int vips_foreign_load_qoir_header(VipsForeignLoad *load)           {
+#ifdef DEBUG
+  printf("vips_foreign_load_qoir_header>: \n");
+#endif /*DEBUG*/
   VipsForeignLoadQoir *qoir = (VipsForeignLoadQoir *)load;
 
   vips_source_minimise(qoir->source);
@@ -105,13 +108,13 @@ static int vips_foreign_load_qoir_header(VipsForeignLoad *load)           {
 }
 
 static VipsImage *vips_foreign_load_qoir_map(VipsForeignLoadQoir *qoir){
+#ifdef DEBUG
+  printf("vips_foreign_load_qoir_map>: \n");
+#endif /*DEBUG*/
   gint64     header_offset;
   size_t     length;
   const void *data;
   VipsImage  *out;
-
-#ifdef DEBUG
-#endif /*DEBUG*/
 
   vips_sbuf_unbuffer(qoir->sbuf);
   header_offset = vips_source_seek(qoir->source, 0, SEEK_CUR);
@@ -133,39 +136,45 @@ static VipsImage *vips_foreign_load_qoir_map(VipsForeignLoadQoir *qoir){
 
 static int vips_foreign_load_qoir_load(VipsForeignLoad *load)           {
   VipsForeignLoadQoir *qoir = (VipsForeignLoadQoir *)load;
-  VipsImage           **t   = (VipsImage **)vips_object_local_array((VipsObject *)load, 2);
-
   vips_foreign_load_qoir_parse_header(qoir);
-
-#ifdef DEBUG
-#endif /*DEBUG*/
-  if (false)
-    fprintf(stderr, "Loading qoir> DECODING "
-            "\tdata? %s\n"
-            "\tdata len: %lld\n"
-            "\tsize: %dx%d\n"
-            "\tfmt: %d\n"
-            "\tout size: %lld\n",
-            (qoir->sbuf != NULL)?"Yes":"No",
-            qoir->source->length,
-            qoir->cfg.dst_pixcfg.height_in_pixels,
-            qoir->cfg.dst_pixcfg.width_in_pixels,
-            qoir->cfg.dst_pixcfg.pixfmt,
-            VIPS_IMAGE_SIZEOF_IMAGE(load->out)
-            );
-
   qoir_decode_options decopts = { 0 };
   decopts.pixfmt = (qoir->cfg.dst_pixcfg.pixfmt == QOIR_PIXEL_FORMAT__BGRX)
                        ? QOIR_PIXEL_FORMAT__RGB
                        : QOIR_PIXEL_FORMAT__RGBA_NONPREMUL;
-
   if (vips_source_rewind(qoir->source)) return(-1);
-
-  qoir->data = vips_source_map(qoir->source, &(qoir->data_len));
-
+  qoir->data = (void*)vips_source_map(qoir->source, &(qoir->data_len));
   qoir_decode_result dec = qoir_decode(qoir->data, qoir->data_len, &decopts);
-  if (false)
-    fprintf(stderr, "Loading qoir> DECODED "
+  VipsImage *vi = vips_image_new_from_memory(
+    (unsigned char *)(dec.dst_pixbuf.data),
+    dec.dst_pixbuf.pixcfg.height_in_pixels * dec.dst_pixbuf.stride_in_bytes,
+    dec.dst_pixbuf.pixcfg.width_in_pixels,
+    dec.dst_pixbuf.pixcfg.height_in_pixels,
+    4,
+    VIPS_FORMAT_UCHAR
+    );
+  if (vi)
+    vips_image_write(vi, load->real);
+
+#ifdef DEBUG
+  fprintf(stderr, "Decoding qoir> "
+            "\tdata?        : %s\n"
+            "\tdata len     : %lu\n"
+            "\trgb stride   : %lu\n"
+            "\trgb          : %dx%d\n"
+            "\tsize         : %dx%d\n"
+            "\tfmt          : %d\n"
+            "\tout size     : %lld\n",
+            (qoir->data != NULL)?"Yes":"No",
+            qoir->data_len,
+            dec.dst_pixbuf.stride_in_bytes,
+            dec.dst_pixbuf.pixcfg.width_in_pixels,
+            dec.dst_pixbuf.pixcfg.height_in_pixels,
+            qoir->cfg.dst_pixcfg.width_in_pixels,
+            qoir->cfg.dst_pixcfg.height_in_pixels,
+            qoir->cfg.dst_pixcfg.pixfmt,
+            VIPS_IMAGE_SIZEOF_IMAGE(vi)
+            );
+  fprintf(stderr, "Loading qoir> DECODED "
             "\tdec size: %dx%d\n"
             "\tstride: %lu\n"
             "\tsrc len: %lld\n"
@@ -177,18 +186,8 @@ static int vips_foreign_load_qoir_load(VipsForeignLoad *load)           {
             vips_source_length(qoir->source),
             qoir->cfg.dst_pixcfg.height_in_pixels * dec.dst_pixbuf.stride_in_bytes
             );
+#endif /*DEBUG*/
 
-  VipsImage *vi = vips_image_new_from_memory(
-    (unsigned char *)dec.dst_pixbuf.data,
-    dec.dst_pixbuf.pixcfg.height_in_pixels * dec.dst_pixbuf.stride_in_bytes,
-    dec.dst_pixbuf.pixcfg.width_in_pixels,
-    dec.dst_pixbuf.pixcfg.height_in_pixels,
-    4,
-    VIPS_FORMAT_UCHAR
-    );
-
-  if (vi)
-    vips_image_write(vi, load->real);
 
   return(0);
 } /* vips_foreign_load_qoir_load */
@@ -206,17 +205,9 @@ static void vips_foreign_load_qoir_class_init(VipsForeignLoadQoirClass *class)  
 
   object_class->nickname    = "qoirload_base";
   object_class->description = _("load qoir base class");
-
-  /* You're unlikely to want to use this on untrusted files.
-   */
   operation_class->flags |= VIPS_OPERATION_UNTRUSTED;
-
   foreign_class->suffs = vips__qoir_suffs;
-
-  /* We are fast at is_a(), so high priority.
-   */
   foreign_class->priority = 200;
-
   load_class->get_flags = vips_foreign_load_qoir_get_flags;
   load_class->header    = vips_foreign_load_qoir_header;
   load_class->load      = vips_foreign_load_qoir_load;
@@ -342,18 +333,6 @@ static void vips_foreign_load_qoir_source_class_init(VipsForeignLoadQoirFileClas
 static void vips_foreign_load_qoir_source_init(VipsForeignLoadQoirSource *source)            {
 }
 
-/**
- * vips_qoirload:
- * @filename: file to load
- * @out: (out): output image
- * @...: %NULL-terminated list of optional named arguments
- *
- * Read a QOIR image. Images are RGB or RGBA, 8 bits.
- *
- * See also: vips_image_new_from_file().
- *
- * Returns: 0 on success, -1 on error.
- */
 int vips_qoirload(const char *filename, VipsImage **out, ...)    {
   va_list ap;
   int     result;
@@ -365,18 +344,6 @@ int vips_qoirload(const char *filename, VipsImage **out, ...)    {
   return(result);
 }
 
-/**
- * vips_qoirload_source:
- * @source: source to load
- * @out: (out): output image
- * @...: %NULL-terminated list of optional named arguments
- *
- * Exactly as vips_qoirload(), but read from a source.
- *
- * See also: vips_qoirload().
- *
- * Returns: 0 on success, -1 on error.
- */
 int vips_qoirload_source(VipsSource *source, VipsImage **out, ...)    {
   va_list ap;
   int     result;
